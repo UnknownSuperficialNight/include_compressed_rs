@@ -1,0 +1,23 @@
+[package]
+name = "include_compressed"
+version = "0.1.0"
+edition = "2024"
+description = "Proc-macros for embedding compressed files and minified WGSL shaders (via miniray) at compile time."
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[features]
+default = []
+wgsl_minify = ["dep:serde_json"]
+
+[dependencies]
+brotli = { git = "https://github.com/dropbox/rust-brotli.git", rev = "319ad14", features = ["simd"] }
+quote = "1.0.46"
+syn = { version = "2.0.118", features = ["full"] }
+proc-macro2 = "1.0.79"
+serde_json = { version = "1.0.150", optional = true }
+
+[build-dependencies]
+cc = "1.2.65"
