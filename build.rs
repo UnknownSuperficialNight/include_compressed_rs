@@ -1,6 +1,11 @@
-use std::{env, path::PathBuf, process::Command};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
-/// Im pretty sure this does not work on windows if someone on windows wants to modify this build script to compile properly for both linux and windows be my guest
+// Im pretty sure this does not work on windows if someone on windows wants to modify this build script to compile properly for both linux and windows be my guest
+
 fn main() {
     // Only run if the wgsl_minify feature is enabled.
     if env::var("CARGO_FEATURE_WGSL_MINIFY").is_err() {
@@ -69,7 +74,7 @@ fn first_existing<'a>(candidates: &[&'a PathBuf]) -> Option<&'a PathBuf> {
 }
 
 // Helper: Emit Cargo linker directives, with duplicate-symbol guard.
-fn emit_link_directives(out_dir: &PathBuf, lib_path: &PathBuf) {
+fn emit_link_directives(out_dir: &Path, lib_path: &Path) {
     let lib_dir = lib_path.parent().expect("lib_path has no parent directory");
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
 
@@ -84,7 +89,7 @@ fn emit_link_directives(out_dir: &PathBuf, lib_path: &PathBuf) {
 }
 
 // Returns true if libinclude_compressed.so is found in OUT_DIR or library paths.
-fn libinclude_compressed_is_available(out_dir: &PathBuf) -> bool {
+fn libinclude_compressed_is_available(out_dir: &Path) -> bool {
     const TARGET: &str = "libinclude_compressed.so";
     if out_dir.join(TARGET).exists() {
         return true;

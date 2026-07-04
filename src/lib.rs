@@ -5,11 +5,6 @@ mod brotli;
 use proc_macro::TokenStream;
 
 #[proc_macro]
-pub fn include_brotli_bytes(input: TokenStream) -> TokenStream {
-    brotli::include_brotli_bytes_impl(input)
-}
-
-#[proc_macro]
 pub fn brotli_compress(input: TokenStream) -> TokenStream {
     brotli::brotli_compress_impl(input)
 }

@@ -327,10 +327,8 @@ pub fn include_minified_wgsl_brotli_impl(input: TokenStream) -> TokenStream {
     let data = fs::read(&abs_path).unwrap();
     let minified = run_miniray(&data, &build_options_json(args.options.as_ref()));
 
-    // Use as_ref() so `args.quality` (Option<LitInt>) is not moved; parse quality or use default.
     let quality = args
         .quality
-        .as_ref()
         .map(|q| q.base10_parse::<u32>().unwrap())
         .unwrap_or(DEFAULT_BROTLI_QUALITY);
 
