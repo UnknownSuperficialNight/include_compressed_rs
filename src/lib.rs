@@ -1,6 +1,7 @@
 extern crate proc_macro;
 
 mod brotli;
+mod parsing;
 
 use proc_macro::TokenStream;
 
