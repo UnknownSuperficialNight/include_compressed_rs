@@ -1,6 +1,4 @@
-use proc_macro::TokenStream;
-use quote::quote;
-use std::{env, fs, io::Write, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 use syn::{
     parse::{Parse, ParseStream},
     LitInt, LitStr, Token,

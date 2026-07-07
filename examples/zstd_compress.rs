@@ -1,23 +1,23 @@
 use std::io::Read;
 
-use brotli::Decompressor;
-use include_compressed::brotli_compress;
+use include_compressed::zstd_compress;
 
 fn main() {
     let original = include_str!("simple_shader.wgsl");
 
-    // Compress a WGSL shader file with Brotli compression, no minification
-    let compressed_bytes = brotli_compress!("examples/simple_shader.wgsl");
+    // Compress a WGSL shader file with Zstd compression, no minification
+    let compressed_bytes = zstd_compress!("examples/simple_shader.wgsl");
 
     println!("Original WGSL:");
     println!("{original}");
     println!();
 
     let mut decompressed = Vec::new();
-    let mut decompressor = Decompressor::new(compressed_bytes.as_slice(), 4096);
-    decompressor
+    let mut decoder = zstd::stream::Decoder::new(compressed_bytes.as_slice())
+        .expect("failed to create Zstd decoder");
+    decoder
         .read_to_end(&mut decompressed)
-        .expect("shader decompression failed");
+        .expect("Zstd decompression failed");
 
     let decompressed_str = String::from_utf8_lossy(&decompressed);
 
