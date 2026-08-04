@@ -1,16 +1,17 @@
 use std::io::Read;
 
+#[cfg(feature = "wgsl_minify")]
 use brotli::Decompressor;
 
 #[cfg(feature = "wgsl_minify")]
-use include_compressed::include_minified_wgsl_brotli;
+use include_compressed::include_minified_wgsl_compressed;
 
 #[cfg(feature = "wgsl_minify")]
 fn main() {
     let original = include_str!("simple_shader.wgsl");
 
-    // Minify and compress the WGSL shader
-    let compressed_bytes = include_minified_wgsl_brotli!("examples/simple_shader.wgsl");
+    // Minify and compress the WGSL shader using brotli
+    let compressed_bytes = include_minified_wgsl_compressed!("examples/simple_shader.wgsl");
 
     let mut decompressed = Vec::new();
     let mut decompressor = Decompressor::new(compressed_bytes.as_slice(), 4096);
@@ -43,5 +44,5 @@ fn main() {
     eprintln!("========================================");
     eprintln!();
     eprintln!("Run:");
-    eprintln!("  cargo run --example include_minified_wgsl_brotli --features wgsl_minify");
+    eprintln!("  cargo run --example include_minified_wgsl_compressed --features wgsl_minify");
 }

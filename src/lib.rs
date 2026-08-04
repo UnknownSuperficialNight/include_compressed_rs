@@ -27,6 +27,6 @@ pub fn include_minified_wgsl(input: TokenStream) -> TokenStream {
 
 #[cfg(feature = "wgsl_minify")]
 #[proc_macro]
-pub fn include_minified_wgsl_brotli(input: TokenStream) -> TokenStream {
-    wgsl::include_minified_wgsl_brotli_impl(input)
+pub fn include_minified_wgsl_compressed(input: TokenStream) -> TokenStream {
+    wgsl::include_minified_wgsl_compressed_impl(input)
 }

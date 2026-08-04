@@ -13,14 +13,16 @@ use std::{
     ptr,
 };
 use syn::{
-    braced,
+    ExprArray, Ident, LitBool, LitInt, LitStr, Token, braced,
     parse::{Parse, ParseStream},
-    ExprArray, Ident, LitBool, LitInt, LitStr, Token,
 };
+
+use crate::parsing::CodecChoice;
 
 // DEFAULTS
 
 const DEFAULT_BROTLI_QUALITY: u32 = 11;
+const DEFAULT_ZSTD_QUALITY: i32 = 22;
 
 /// Default minification settings used if the user doesn't provide a field.
 /// Values match the Options Reference table exactly.
@@ -88,7 +90,7 @@ impl Parse for MinirayInput {
                     return Err(syn::Error::new(
                         field.span(),
                         "Unknown field in MinirayInput",
-                    ))
+                    ));
                 }
             }
             if content.peek(Token![,]) {
@@ -128,33 +130,57 @@ impl Parse for WgslArgs {
     }
 }
 
-pub struct WgslBrotliArgs {
+pub struct WgslCompressedArgs {
     pub path: LitStr,
     pub quality: Option<LitInt>,
+    pub codec: Option<CodecChoice>,
     pub options: Option<MinirayInput>,
 }
 
-impl Parse for WgslBrotliArgs {
+impl Parse for WgslCompressedArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let path: LitStr = input.parse()?;
-        let mut quality = None;
-        let mut options = None;
 
-        if input.peek(Token![,]) {
+        let mut quality: Option<LitInt> = None;
+        let mut codec: Option<CodecChoice> = None;
+        let mut options: Option<MinirayInput> = None;
+
+        while input.peek(Token![,]) {
             let _: Token![,] = input.parse()?;
-            if input.peek(LitInt) {
-                quality = Some(input.parse()?);
-                if input.peek(Token![,]) {
-                    let _: Token![,] = input.parse()?;
+            if input.is_empty() {
+                break;
+            }
+
+            let key: Ident = input.parse()?;
+            let _: Token![=] = input.parse()?;
+
+            match key.to_string().as_str() {
+                "codec" => {
+                    let lit: LitStr = input.parse()?;
+                    codec = Some(
+                        CodecChoice::from_str(&lit.value())
+                            .map_err(|e| syn::Error::new(lit.span(), e))?,
+                    );
+                }
+                "quality" => {
+                    quality = Some(input.parse()?);
+                }
+                "options" => {
                     options = Some(input.parse()?);
                 }
-            } else if input.peek(Ident) {
-                options = Some(input.parse()?);
+                _ => {
+                    return Err(syn::Error::new(
+                        key.span(),
+                        "expected codec, quality, or options",
+                    ));
+                }
             }
         }
-        Ok(WgslBrotliArgs {
+
+        Ok(Self {
             path,
             quality,
+            codec,
             options,
         })
     }
@@ -321,22 +347,45 @@ pub fn include_minified_wgsl_impl(input: TokenStream) -> TokenStream {
     quote!(#s).into()
 }
 
-pub fn include_minified_wgsl_brotli_impl(input: TokenStream) -> TokenStream {
-    let args = syn::parse_macro_input!(input as WgslBrotliArgs);
+pub fn include_minified_wgsl_compressed_impl(input: TokenStream) -> TokenStream {
+    let args = syn::parse_macro_input!(input as WgslCompressedArgs);
     let abs_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join(args.path.value());
     let data = fs::read(&abs_path).unwrap();
     let minified = run_miniray(&data, &build_options_json(args.options.as_ref()));
 
-    let quality = args
-        .quality
-        .map(|q| q.base10_parse::<u32>().unwrap())
-        .unwrap_or(DEFAULT_BROTLI_QUALITY);
+    let codec = args.codec.unwrap_or(CodecChoice::Brotli);
 
-    let mut compressed = Vec::new();
-    {
-        let mut writer = brotli::CompressorWriter::new(&mut compressed, 4096, quality, 22);
-        writer.write_all(&minified).unwrap();
-    }
+    let compressed = match codec {
+        CodecChoice::Brotli => {
+            let quality = args
+                .quality
+                .map(|q| q.base10_parse::<u32>().unwrap())
+                .unwrap_or(DEFAULT_BROTLI_QUALITY);
+
+            let mut compressed = Vec::new();
+            {
+                let mut writer = brotli::CompressorWriter::new(&mut compressed, 4096, quality, 22);
+                writer.write_all(&minified).unwrap();
+            }
+
+            compressed
+        }
+        CodecChoice::Zstd => {
+            let quality = args
+                .quality
+                .map(|q| q.base10_parse::<i32>().unwrap())
+                .unwrap_or(DEFAULT_ZSTD_QUALITY);
+
+            let mut compressed = Vec::new();
+            {
+                let mut encoder = zstd::Encoder::new(&mut compressed, quality).unwrap();
+                encoder.write_all(&minified).unwrap();
+                encoder.finish().unwrap();
+            }
+
+            compressed
+        }
+    };
 
     quote!(&[#(#compressed),*]).into()
 }

@@ -1,0 +1,52 @@
+use std::io::Read;
+
+#[cfg(feature = "wgsl_minify")]
+use include_compressed::include_minified_wgsl_compressed;
+#[cfg(feature = "wgsl_minify")]
+use zstd::Decoder;
+
+#[cfg(feature = "wgsl_minify")]
+fn main() {
+    let original = include_str!("simple_shader.wgsl");
+
+    // Minify and compress the WGSL shader using brotli
+    let compressed_bytes = include_minified_wgsl_compressed!(
+        "examples/simple_shader.wgsl",
+        codec = "zstd",
+        quality = 4
+    );
+
+    let mut decompressed = Vec::new();
+    let mut decoder =
+        Decoder::new(compressed_bytes.as_slice()).expect("failed to create zstd decoder");
+    decoder
+        .read_to_end(&mut decompressed)
+        .expect("shader decompression failed");
+
+    let decompressed_str = String::from_utf8_lossy(&decompressed);
+
+    println!("Original WGSL:");
+    println!("{original}");
+    println!();
+
+    println!("Decompressed WGSL:");
+    println!("{decompressed_str}");
+    println!();
+
+    println!("Original size: {} bytes", original.len());
+    println!("Compressed size: {} bytes", compressed_bytes.len());
+    println!(
+        "Size reduction: {:.2}%",
+        100.0 - (compressed_bytes.len() as f64 / original.len() as f64 * 100.0)
+    );
+}
+
+#[cfg(not(feature = "wgsl_minify"))]
+fn main() {
+    eprintln!("========================================");
+    eprintln!("  This example requires wgsl_minify     ");
+    eprintln!("========================================");
+    eprintln!();
+    eprintln!("Run:");
+    eprintln!("  cargo run --example include_minified_wgsl_compressed_zstd --features wgsl_minify");
+}

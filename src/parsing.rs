@@ -1,7 +1,7 @@
 use std::{env, fs, path::PathBuf};
 use syn::{
-    parse::{Parse, ParseStream},
     LitInt, LitStr, Token,
+    parse::{Parse, ParseStream},
 };
 
 /// Generic macro input: mandatory string literal followed by an optional integer.
@@ -37,4 +37,24 @@ pub fn resolve_path(input_path: &LitStr) -> PathBuf {
 /// Read the whole file and panic with a clear message on error.
 pub fn read_file(path: &PathBuf) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|e| panic!("failed to read file {}: {}", path.display(), e))
+}
+
+#[cfg(feature = "wgsl_minify")]
+#[derive(Clone, Copy, Debug)]
+pub enum CodecChoice {
+    Brotli,
+    Zstd,
+}
+
+#[cfg(feature = "wgsl_minify")]
+impl CodecChoice {
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s {
+            "brotli" | "Brotli" => Ok(Self::Brotli),
+            "zstd" | "Zstd" => Ok(Self::Zstd),
+            other => Err(format!(
+                "unknown codec `{other}` (expected \"brotli\" or \"zstd\")"
+            )),
+        }
+    }
 }
