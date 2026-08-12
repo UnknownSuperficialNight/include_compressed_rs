@@ -2,10 +2,10 @@ use proc_macro::TokenStream;
 use quote::quote;
 use std::io::Write;
 
-use crate::parsing::{read_file, resolve_path, PathOptionInput};
+use crate::parsing::{PathOptionInput, read_file, resolve_path};
 
-/// Default Zstd compression level to MAX (11)
-const DEFAULT_ZSTD_QUALITY: i32 = 11;
+/// Default Zstd compression level to MAX (22)
+const DEFAULT_ZSTD_QUALITY: i32 = 22;
 
 /// Compresses the given file path to zstd and returns the compressed bytes as a literal
 ///
