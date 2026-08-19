@@ -2,8 +2,11 @@
 name = "include_compressed"
 version = "0.1.0"
 edition = "2024"
-description = "Proc-macros for embedding compressed files and minified WGSL shaders (via miniray) at compile time."
-license = "MIT OR Apache-2.0"
+description = "Proc-macros for embedding compressed files and minified WGSL shaders (via miniray) at compile time"
+license = "Apache-2.0"
+keywords = ["proc-macro", "compression", "wgsl"]
+repository = "https://github.com/UnknownSuperficialNight/include_compressed_rs"
+readme = "README.md"
 
 [lib]
 proc-macro = true
