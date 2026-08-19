@@ -3,18 +3,35 @@ use std::io::Read;
 use brotli::Decompressor;
 use include_compressed::brotli_compress;
 
-fn main() {
-    let original = include_str!("simple_shader.wgsl");
+fn load_shader() -> (&'static str, &'static [u8]) {
+    #[cfg(feature = "large_shader")]
+    {
+        let original = include_str!("large_shader.wgsl");
 
-    // Compress a WGSL shader file with Brotli compression, no minification
-    let compressed_bytes = brotli_compress!("examples/simple_shader.wgsl");
+        let compressed_bytes = brotli_compress!("examples/large_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+
+    #[cfg(not(feature = "large_shader"))]
+    {
+        let original = include_str!("../examples/simple_shader.wgsl");
+
+        let compressed_bytes = brotli_compress!("examples/simple_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+}
+
+fn main() {
+    let (original, compressed_bytes) = load_shader();
 
     println!("Original WGSL:");
     println!("{original}");
     println!();
 
     let mut decompressed = Vec::new();
-    let mut decompressor = Decompressor::new(compressed_bytes.as_slice(), 4096);
+    let mut decompressor = Decompressor::new(compressed_bytes, 4096);
     decompressor
         .read_to_end(&mut decompressed)
         .expect("shader decompression failed");

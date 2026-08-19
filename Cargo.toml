@@ -11,6 +11,7 @@ proc-macro = true
 [features]
 default = []
 wgsl_minify = ["dep:serde_json"]
+large_shader = []
 
 [dependencies]
 brotli = { git = "https://github.com/dropbox/rust-brotli.git", rev = "319ad14", features = ["simd"] }

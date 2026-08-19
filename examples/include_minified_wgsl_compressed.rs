@@ -7,14 +7,32 @@ use brotli::Decompressor;
 use include_compressed::include_minified_wgsl_compressed;
 
 #[cfg(feature = "wgsl_minify")]
-fn main() {
-    let original = include_str!("simple_shader.wgsl");
+fn load_shader() -> (&'static str, &'static [u8]) {
+    #[cfg(feature = "large_shader")]
+    {
+        let original = include_str!("large_shader.wgsl");
 
-    // Minify and compress the WGSL shader using brotli
-    let compressed_bytes = include_minified_wgsl_compressed!("examples/simple_shader.wgsl");
+        let compressed_bytes = include_minified_wgsl_compressed!("examples/large_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+
+    #[cfg(not(feature = "large_shader"))]
+    {
+        let original = include_str!("../examples/simple_shader.wgsl");
+
+        let compressed_bytes = include_minified_wgsl_compressed!("examples/simple_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+}
+
+#[cfg(feature = "wgsl_minify")]
+fn main() {
+    let (original, compressed_bytes) = load_shader();
 
     let mut decompressed = Vec::new();
-    let mut decompressor = Decompressor::new(compressed_bytes.as_slice(), 4096);
+    let mut decompressor = Decompressor::new(compressed_bytes, 4096);
     decompressor
         .read_to_end(&mut decompressed)
         .expect("shader decompression failed");
@@ -45,4 +63,11 @@ fn main() {
     eprintln!();
     eprintln!("Run:");
     eprintln!("  cargo run --example include_minified_wgsl_compressed --features wgsl_minify");
+    eprintln!();
+    eprintln!("Or");
+    eprintln!();
+    eprintln!(
+        "  cargo run --example include_minified_wgsl_compressed --features 'wgsl_minify, large_shader'"
+    );
+    eprintln!();
 }

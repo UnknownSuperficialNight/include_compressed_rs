@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use std::io::Write;
 
-use crate::parsing::{read_file, resolve_path, PathOptionInput};
+use crate::parsing::{PathOptionInput, read_file, resolve_path};
 
 /// Default Brotli compression level to MAX (11)
 const DEFAULT_BROTLI_QUALITY: u32 = 11;
@@ -22,9 +22,7 @@ pub fn brotli_compress_impl(input: TokenStream) -> TokenStream {
     let data = read_file(&abs_path);
 
     // The optional integer is the quality.
-    let quality = option
-        .map(|i| i.base10_parse::<u32>().unwrap())
-        .unwrap_or(DEFAULT_BROTLI_QUALITY);
+    let quality = option.map_or(DEFAULT_BROTLI_QUALITY, |i| i.base10_parse::<u32>().unwrap());
 
     // Perform compression.
     let mut compressed = Vec::new();

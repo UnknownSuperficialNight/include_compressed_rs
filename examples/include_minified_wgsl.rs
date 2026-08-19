@@ -1,10 +1,29 @@
 #[cfg(feature = "wgsl_minify")]
 use include_compressed::include_minified_wgsl;
 
+fn load_shader() -> (&'static str, &'static str) {
+    #[cfg(feature = "large_shader")]
+    {
+        let original = include_str!("large_shader.wgsl");
+
+        let compressed_bytes = include_minified_wgsl!("examples/large_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+
+    #[cfg(not(feature = "large_shader"))]
+    {
+        let original = include_str!("../examples/simple_shader.wgsl");
+
+        let compressed_bytes = include_minified_wgsl!("examples/simple_shader.wgsl");
+
+        (original, compressed_bytes)
+    }
+}
+
 #[cfg(feature = "wgsl_minify")]
 fn main() {
-    let original = include_str!("simple_shader.wgsl");
-    let minified = include_minified_wgsl!("examples/simple_shader.wgsl");
+    let (original, minified) = load_shader();
 
     println!("Original WGSL:");
     println!("{original}");

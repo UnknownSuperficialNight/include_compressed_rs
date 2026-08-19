@@ -22,9 +22,7 @@ pub fn zstd_compress_impl(input: TokenStream) -> TokenStream {
     let data = read_file(&abs_path);
 
     // The optional integer is the quality.
-    let quality = option
-        .map(|i| i.base10_parse::<i32>().unwrap())
-        .unwrap_or(DEFAULT_ZSTD_QUALITY);
+    let quality = option.map_or(DEFAULT_ZSTD_QUALITY, |i| i.base10_parse::<i32>().unwrap());
 
     // Perform Zstd compression
     let mut compressed = Vec::new();
